@@ -7,11 +7,47 @@ resources:
       branch: scripts
 
 jobs:
+  - name: trigger_tests
+    type: runSh
+    runtime:
+      nodePool: u14custom
+    steps:
+    - TASK:
+        script: echo "Trigger tests"
+
+  - name: tests_that_succeed
+    type: runSh
+    runtime:
+      nodePool: u14custom
+    steps:
+    - IN: trigger_tests
+    - TASK:
+        script: echo "Trigger success tests"
+
+  - name: tests_that_fail
+    type: runSh
+    runtime:
+      nodePool: u14custom
+    steps:
+    - IN: trigger_tests
+    - TASK:
+        script: echo "Trigger fail tests"
+
+  - name: caveats
+    type: runSh
+    runtime:
+      nodePool: u14custom
+    steps:
+    - IN: trigger_tests
+    - TASK:
+        script: echo "Trigger caveat tests"
+
   - name: verify_success_cases
     type: runSh
     runtime:
       nodePool: u14custom
     steps:
+    - IN: tests_that_succeed
     - IN: sample_scripts_repo
     - TASK:
         name: simple
@@ -68,6 +104,9 @@ jobs:
         script: >
             exit 0
     - TASK:
+        name: container_sleep
+        script: sleep 10
+    - TASK:
         name: run_success_script
         runtime:
           container: false
@@ -75,13 +114,17 @@ jobs:
           - pushd $(shipctl get_resource_state "sample_scripts_repo") && git checkout scripts
           - ./success_script.sh
           - popd
+    on_success:
+      - script: sleep 5s && echo "success :)"
+    always:
+      - script: sleep 10s && echo "always"
 
   - name: single_line_incorrect_command
     type: runSh
     runtime:
       nodePool: u14custom
     steps:
-    - IN: verify_success_cases
+    - IN: tests_that_fail
     - TASK:
         name: host_exit_1
         runtime:
@@ -96,7 +139,7 @@ jobs:
     runtime:
       nodePool: u14custom
     steps:
-    - IN: verify_success_cases
+    - IN: tests_that_fail
     - TASK:
         name: wrong_command
         script: sl
@@ -106,7 +149,7 @@ jobs:
     runtime:
       nodePool: u14custom
     steps:
-    - IN: verify_success_cases
+    - IN: tests_that_fail
     - TASK:
         name: multi-line-fail
         script: |
@@ -119,7 +162,7 @@ jobs:
     runtime:
       nodePool: u14custom
     steps:
-    - IN: verify_success_cases
+    - IN: tests_that_fail
     - TASK:
         name: non_zero_exit
         script: exit -1
@@ -129,7 +172,7 @@ jobs:
     runtime:
       nodePool: u14custom
     steps:
-    - IN: verify_success_cases
+    - IN: tests_that_fail
     - IN: sample_scripts_repo
     - TASK:
         name: run_fail_script
@@ -140,9 +183,10 @@ jobs:
 
   - name: sleep_in_always_on_success
     type: runSh
+    runtime:
+      nodePool: u14custom
     steps:
-    - IN: verify_success_cases
-    - IN: sample_scripts_repo
+    - IN: tests_that_succeed
     - TASK:
         name: run_fail_script
         script:
@@ -155,35 +199,30 @@ jobs:
       - script: echo $foo
       - script: sleep 5
 
-# caveats
-  - name: unset_err_trap_and_incorrect_command
+  - name: sleep_in_always_on_failure
     type: runSh
     runtime:
       nodePool: u14custom
     steps:
+    - IN: tests_that_fail
     - TASK:
         name: run_fail_script
-        script: |
-            trap "" ERR
-            sl
-            ls
-
-  - name: unset_exit_trap_exit_0
-    type: runSh
-    runtime:
-      nodePool: u14custom
-    steps:
-    - TASK:
-        name: run_fail_script
-        script: |
-            trap "" EXIT
-            exit 0
+        script:
+          - lol
+    on_failure:
+      - script: echo $foo
+      - script: foo=on_failure
+      - script: sleep 5
+    always:
+      - script: echo $foo
+      - script: sleep 5
 
   - name: exit_0_in_on_success
     type: runSh
     runtime:
       nodePool: u14custom
     steps:
+    - IN: tests_that_succeed
     - TASK:
         script: echo foo
     on_success:
@@ -196,6 +235,7 @@ jobs:
     runtime:
       nodePool: u14custom
     steps:
+    - IN: tests_that_succeed
     - TASK:
         script: echo foo
     on_success:
@@ -208,9 +248,101 @@ jobs:
     runtime:
       nodePool: u14custom
     steps:
+    - IN: tests_that_fail
     - TASK:
         script: export foo=123
     on_success:
       - script: echo $foo && exit 1
     always:
       - script: echo $foo && echo always
+
+  - name: exit_0_in_on_failure
+    type: runSh
+    runtime:
+      nodePool: u14custom
+    steps:
+    - IN: tests_that_fail
+    - TASK:
+        script: export foo=123 && sk
+    on_failure:
+      - script: echo $foo && exit 0
+    always:
+      - script: echo $foo && echo always
+
+  - name: exit_0_in_always_in_failed_script
+    type: runSh
+    runtime:
+      nodePool: u14custom
+    steps:
+    - IN: tests_that_fail
+    - TASK:
+        script: export foo=123 && sl
+    on_failure:
+      - script: foo=321
+    always:
+      - script: echo $foo && echo always && exit 0
+
+  - name: exit_1_in_always_in_success_script
+    type: runSh
+    runtime:
+      nodePool: u14custom
+    steps:
+    - IN: tests_that_fail
+    - TASK:
+        script: export foo=123
+    on_success:
+      - script: foo=321
+    always:
+      - script: echo $foo && echo always && exit 1
+
+  - name: exit_0_in_always_in_success_script
+    type: runSh
+    runtime:
+      nodePool: u14custom
+    steps:
+    - IN: tests_that_succeed
+    - TASK:
+        script: export foo=123
+    on_success:
+      - script: foo=321
+    always:
+      - script: echo $foo && echo always && exit 0
+
+  - name: exit_1_in_always_in_fail_script
+    type: runSh
+    runtime:
+      nodePool: u14custom
+    steps:
+    - IN: tests_that_fail
+    - TASK:
+        script: export foo=123 && sl
+    on_failure:
+      - script: foo=321
+    always:
+      - script: echo $foo && echo always && exit 1
+
+# caveats
+  - name: unset_err_trap_and_incorrect_command
+    type: runSh
+    runtime:
+      nodePool: u14custom
+    steps:
+    - IN: caveats
+    - TASK:
+        name: run_fail_script
+        script: |
+            trap "" ERR
+            sl
+            ls
+
+  - name: unset_exit_trap_exit_0
+    type: runSh
+    runtime:
+      nodePool: u14custom
+    steps:
+    - IN: caveats
+    - TASK:
+        name: run_fail_script
+        script: |
+            trap "" EXIT
+            exit 0
