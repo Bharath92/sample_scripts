@@ -1,8 +1,6 @@
 jobs:
-  - name: centos_verify_success_cases
+  - name: dyn_verify_success_cases
     type: runSh
-    runtime:
-      nodePool: c07custom
     steps:
     - IN: tests_that_succeed
     - IN: sample_scripts_repo
@@ -76,10 +74,8 @@ jobs:
     always:
       - script: sleep 10s && echo "always"
 
-  - name: centos_single_line_incorrect_command
+  - name: dyn_single_line_incorrect_command
     type: runSh
-    runtime:
-      nodePool: c07custom
     steps:
     - IN: tests_that_fail
     - TASK:
@@ -91,20 +87,16 @@ jobs:
             sl;
             pwd;
 
-  - name: centos_simple_incorrect_command
+  - name: dyn_simple_incorrect_command
     type: runSh
-    runtime:
-      nodePool: c07custom
     steps:
     - IN: tests_that_fail
     - TASK:
         name: wrong_command
         script: sl
 
-  - name: centos_multi_line_incorrect_command
+  - name: dyn_multi_line_incorrect_command
     type: runSh
-    runtime:
-      nodePool: c07custom
     steps:
     - IN: tests_that_fail
     - TASK:
@@ -114,20 +106,16 @@ jobs:
             sl
             pwd
 
-  - name: centos_simple_non_zero_exit
+  - name: dyn_simple_non_zero_exit
     type: runSh
-    runtime:
-      nodePool: c07custom
     steps:
     - IN: tests_that_fail
     - TASK:
         name: non_zero_exit
         script: exit -1
 
-  - name: centos_run_fail_script
+  - name: dyn_run_fail_script
     type: runSh
-    runtime:
-      nodePool: c07custom
     steps:
     - IN: tests_that_fail
     - IN: sample_scripts_repo
@@ -138,10 +126,8 @@ jobs:
           - ./failure_script.sh
           - popd
 
-  - name: centos_sleep_in_always_on_success
+  - name: dyn_sleep_in_always_on_success
     type: runSh
-    runtime:
-      nodePool: c07custom
     steps:
     - IN: tests_that_succeed
     - TASK:
@@ -156,10 +142,8 @@ jobs:
       - script: echo $foo
       - script: sleep 5
 
-  - name: centos_sleep_in_always_on_failure
+  - name: dyn_sleep_in_always_on_failure
     type: runSh
-    runtime:
-      nodePool: c07custom
     steps:
     - IN: tests_that_fail
     - TASK:
@@ -174,10 +158,8 @@ jobs:
       - script: echo $foo
       - script: sleep 5
 
-  - name: centos_exit_0_in_on_success
+  - name: dyn_exit_0_in_on_success
     type: runSh
-    runtime:
-      nodePool: c07custom
     steps:
     - IN: tests_that_succeed
     - TASK:
@@ -187,10 +169,8 @@ jobs:
     always:
       - script: echo always
 
-  - name: centos_wrong_command_in_on_success
+  - name: dyn_wrong_command_in_on_success
     type: runSh
-    runtime:
-      nodePool: c07custom
     steps:
     - IN: tests_that_succeed
     - TASK:
@@ -200,10 +180,8 @@ jobs:
     always:
       - script: echo always
 
-  - name: centos_exit_1_in_on_success
+  - name: dyn_exit_1_in_on_success
     type: runSh
-    runtime:
-      nodePool: c07custom
     steps:
     - IN: tests_that_fail
     - TASK:
@@ -213,10 +191,8 @@ jobs:
     always:
       - script: echo $foo && echo always
 
-  - name: centos_exit_0_in_on_failure
+  - name: dyn_exit_0_in_on_failure
     type: runSh
-    runtime:
-      nodePool: c07custom
     steps:
     - IN: tests_that_fail
     - TASK:
@@ -226,10 +202,8 @@ jobs:
     always:
       - script: echo $foo && echo always
 
-  - name: centos_exit_0_in_always_in_failed_script
+  - name: dyn_exit_0_in_always_in_failed_script
     type: runSh
-    runtime:
-      nodePool: c07custom
     steps:
     - IN: tests_that_fail
     - TASK:
@@ -239,10 +213,8 @@ jobs:
     always:
       - script: echo $foo && echo always && exit 0
 
-  - name: centos_exit_1_in_always_in_success_script
+  - name: dyn_exit_1_in_always_in_success_script
     type: runSh
-    runtime:
-      nodePool: c07custom
     steps:
     - IN: tests_that_fail
     - TASK:
@@ -252,10 +224,8 @@ jobs:
     always:
       - script: echo $foo && echo always && exit 1
 
-  - name: centos_exit_0_in_always_in_success_script
+  - name: dyn_exit_0_in_always_in_success_script
     type: runSh
-    runtime:
-      nodePool: c07custom
     steps:
     - IN: tests_that_succeed
     - TASK:
@@ -265,10 +235,8 @@ jobs:
     always:
       - script: echo $foo && echo always && exit 0
 
-  - name: centos_exit_1_in_always_in_fail_script
+  - name: dyn_exit_1_in_always_in_fail_script
     type: runSh
-    runtime:
-      nodePool: c07custom
     steps:
     - IN: tests_that_fail
     - TASK:
@@ -279,10 +247,8 @@ jobs:
       - script: echo $foo && echo always && exit 1
 
 # caveats
-  - name: centos_unset_err_trap_and_incorrect_command
+  - name: dyn_unset_err_trap_and_incorrect_command
     type: runSh
-    runtime:
-      nodePool: c07custom
     steps:
     - IN: caveats
     - TASK:
@@ -292,10 +258,8 @@ jobs:
             sl
             ls
 
-  - name: centos_unset_exit_trap_exit_0
+  - name: dyn_unset_exit_trap_exit_0
     type: runSh
-    runtime:
-      nodePool: c07custom
     steps:
     - IN: caveats
     - TASK:
