@@ -5,6 +5,11 @@ resources:
     pointer:
       sourceName: bharath92/sample_scripts
       branch: scripts
+  - name: oldAwsInt
+    type: cliConfig
+    integration: shipecr
+    pointer:
+      region: us-east-1
 
 jobs:
   - name: trigger_tests
@@ -346,3 +351,11 @@ jobs:
         script: |
             trap "" EXIT
             exit 0
+  - name: pull-aws-image
+    type: runSh
+    steps:
+    - IN: oldAwsInt
+    - TASK:
+      - script: aws --version
+      - script: docker pull 374168611083.dkr.ecr.us-east-1.amazonaws.com/api
+      - script: docker images
