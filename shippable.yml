@@ -1,305 +1,269 @@
 jobs:
-  - name: centos_verify_success_cases
+  - name: windows_tests_that_succeed
     type: runSh
     runtime:
-      nodePool: c07custom
+      nodePool: custom__x86_64__WindowsServer_2016
+      container: false
     steps:
-    - IN: tests_that_succeed
-    - IN: sample_scripts_repo
+    - TASK:
+        name: trigger_tests_that succeed
+        script: echo "trigger success tests"
+
+  - name: windows_tests_that_fail
+    type: runSh
+    runtime:
+      nodePool: custom__x86_64__WindowsServer_2016
+      container: false
+    steps:
+    - TASK:
+        name: trigger_tests_that succeed
+        script: echo "trigger fail tests"
+
+  - name: windows_verify_success_cases
+    type: runSh
+    runtime:
+      nodePool: custom__x86_64__WindowsServer_2016
+      container: false
+    steps:
+    - IN: windows_tests_that_succeed
     - TASK:
         name: simple
         script:
-          - ls
+          - echo "Hi :)"
     - TASK:
         name: multi_simple
         script: |
-            ls
-            pwd
-            true
+            echo "Testing multi-line script - line 1"
+            echo "Testing multi-line script - line 2"
+            echo "Testing multi-line script - line 3"
     - TASK:
         name: multi_exit_0
         script: |
-            ls
+            echo "first line"
             exit 0
-            pwd
+            echo "third line"
     - TASK:
         name: exit-0->
         script: >
             exit 0
-    - TASK:
-        name: run_success_script
-        script:
-          - pushd $(shipctl get_resource_state "sample_scripts_repo") && git checkout scripts
-          - ./success_script.sh
-          - popd
-    - TASK:
-        name: host_simple
-        runtime:
-          container: false
-        script:
-          - ls
-    - TASK:
-        name: host_multi_simple
-        runtime:
-          container: false
-        script: |
-            ls
-            pwd
-            true
-    - TASK:
-        name: host_multi_exit-0
-        runtime:
-          container: false
-        script: |
-            ls
-            exit 0
-            pwd
-    - TASK:
-        name: host_exit_0->
-        runtime:
-          container: false
-        script: >
-            exit 0
-    - TASK:
-        name: container_sleep
-        script: sleep 10
-    - TASK:
-        name: run_success_script
-        runtime:
-          container: false
-        script:
-          - pushd $(shipctl get_resource_state "sample_scripts_repo") && git checkout scripts
-          - ./success_script.sh
-          - popd
     on_success:
-      - script: sleep 5s && echo "success :)"
+      - script: Start-Sleep -s 5
+      - script: echo "success :)"
+    on_failure:
+      - script: Start-Sleep -s 3
+      - script: echo "failure :)"
     always:
-      - script: sleep 10s && echo "always"
+      - script: Start-Sleep -s 10
+      - script: echo always
 
-  - name: centos_single_line_incorrect_command
+  - name: windows_single_line_incorrect_command
     type: runSh
     runtime:
-      nodePool: c07custom
+      nodePool: custom__x86_64__WindowsServer_2016
+      container: false
     steps:
-    - IN: tests_that_fail
+    - IN: windows_tests_that_fail
     - TASK:
         name: host_exit_1
         runtime:
           container: false
         script: >
-            ls;
-            sl;
-            pwd;
+            echo "first line";
+            foo;
+            echo "this shouldn't be executed";
 
-  - name: centos_simple_incorrect_command
+  - name: windows_simple_incorrect_command
     type: runSh
     runtime:
-      nodePool: c07custom
+      nodePool: custom__x86_64__WindowsServer_2016
+      container: false
     steps:
-    - IN: tests_that_fail
+    - IN: windows_tests_that_fail
     - TASK:
         name: wrong_command
-        script: sl
+        script: foo
 
-  - name: centos_multi_line_incorrect_command
+  - name: windows_multi_line_incorrect_command
     type: runSh
     runtime:
-      nodePool: c07custom
+      nodePool: custom__x86_64__WindowsServer_2016
+      container: false
     steps:
-    - IN: tests_that_fail
+    - IN: windows_tests_that_fail
     - TASK:
         name: multi-line-fail
         script: |
-            ls
-            sl
-            pwd
+            echo "first line";
+            foo;
+            echo "this shouldn't be executed";
 
-  - name: centos_simple_non_zero_exit
+  - name: windows_simple_non_zero_exit
     type: runSh
     runtime:
-      nodePool: c07custom
+      nodePool: custom__x86_64__WindowsServer_2016
+      container: false
     steps:
-    - IN: tests_that_fail
+    - IN: windows_tests_that_fail
     - TASK:
         name: non_zero_exit
         script: exit -1
 
-  - name: centos_run_fail_script
+  - name: windows_sleep_in_always_on_success
     type: runSh
     runtime:
-      nodePool: c07custom
+      nodePool: custom__x86_64__WindowsServer_2016
+      container: false
     steps:
-    - IN: tests_that_fail
-    - IN: sample_scripts_repo
+    - IN: windows_tests_that_succeed
     - TASK:
         name: run_fail_script
         script:
-          - pushd $(shipctl get_resource_state "sample_scripts_repo") && git checkout scripts
-          - ./failure_script.sh
-          - popd
-
-  - name: centos_sleep_in_always_on_success
-    type: runSh
-    runtime:
-      nodePool: c07custom
-    steps:
-    - IN: tests_that_succeed
-    - TASK:
-        name: run_fail_script
-        script:
-          - export foo=bar
+          - $foo = "bar"
     on_success:
-      - script: echo $foo
-      - script: foo=on_success
-      - script: sleep 5
+      - script: $foo
+      - script: $foo = "on_success"
+      - script: Start-Sleep -s 5
     always:
-      - script: echo $foo
-      - script: sleep 5
+      - script: $foo
+      - script: Start-Sleep -s 5
 
-  - name: centos_sleep_in_always_on_failure
+  - name: windows_sleep_in_always_on_failure
     type: runSh
     runtime:
-      nodePool: c07custom
+      nodePool: custom__x86_64__WindowsServer_2016
+      container: false
     steps:
-    - IN: tests_that_fail
+    - IN: windows_tests_that_fail
     - TASK:
         name: run_fail_script
         script:
+          - $foo = "hi :)"
           - lol
     on_failure:
-      - script: echo $foo
-      - script: foo=on_failure
-      - script: sleep 5
+      - script: $foo
+      - script: $foo = "on_failure"
+      - script: Start-Sleep -s 5
     always:
       - script: echo $foo
-      - script: sleep 5
+      - script: Start-Sleep -s 5
 
-  - name: centos_exit_0_in_on_success
+  - name: windows_exit_0_in_on_success
     type: runSh
     runtime:
-      nodePool: c07custom
+      nodePool: custom__x86_64__WindowsServer_2016
+      container: false
     steps:
-    - IN: tests_that_succeed
+    - IN: windows_tests_that_succeed
     - TASK:
-        script: echo foo
+        script: echo "foo"
     on_success:
       - script: exit 0
     always:
-      - script: echo always
+      - script: echo "this will not be executed"
 
-  - name: centos_wrong_command_in_on_success
+  - name: windows_wrong_command_in_on_success
     type: runSh
     runtime:
-      nodePool: c07custom
+      nodePool: custom__x86_64__WindowsServer_2016
+      container: false
     steps:
-    - IN: tests_that_succeed
+    - IN: windows_tests_that_succeed
     - TASK:
-        script: echo foo
+        script: echo "foo"
     on_success:
-      - script: sl
+      - script: foo
     always:
-      - script: echo always
+      - script: echo "always"
 
-  - name: centos_exit_1_in_on_success
+  - name: windows_exit_1_in_on_success
     type: runSh
     runtime:
-      nodePool: c07custom
+      nodePool: custom__x86_64__WindowsServer_2016
+      container: false
     steps:
-    - IN: tests_that_fail
+    - IN: windows_tests_that_fail
     - TASK:
-        script: export foo=123
+        script: $foo = 123
     on_success:
-      - script: echo $foo && exit 1
+      - script: $foo
+      - script: exit 1
     always:
-      - script: echo $foo && echo always
+      - script: echo "this should not be executed"
 
-  - name: centos_exit_0_in_on_failure
+  - name: windows_exit_0_in_on_failure
     type: runSh
     runtime:
-      nodePool: c07custom
+      nodePool: custom__x86_64__WindowsServer_2016
+      container: false
     steps:
-    - IN: tests_that_fail
+    - IN: windows_tests_that_fail
     - TASK:
-        script: export foo=123 && sk
+        script:
+          - $foo = 123
+          - $foo
     on_failure:
-      - script: echo $foo && exit 0
+      - script: $foo
+      - script: exit 0
     always:
-      - script: echo $foo && echo always
+      - script: echo "is this getting executed?"
 
-  - name: centos_exit_0_in_always_in_failed_script
+  - name: windows_exit_0_in_always_in_failed_script
     type: runSh
     runtime:
-      nodePool: c07custom
+      nodePool: custom__x86_64__WindowsServer_2016
+      container: false
     steps:
-    - IN: tests_that_fail
+    - IN: windows_tests_that_fail
     - TASK:
-        script: export foo=123 && sl
+        script: sl
     on_failure:
-      - script: foo=321
+      - script: $foo = 321
     always:
-      - script: echo $foo && echo always && exit 0
+      - script: echo $foo
+      - script: exit 0
+      - script: echo "is this getting executed"
 
-  - name: centos_exit_1_in_always_in_success_script
+  - name: windows_exit_1_in_always_in_success_script
     type: runSh
     runtime:
-      nodePool: c07custom
+      nodePool: custom__x86_64__WindowsServer_2016
+      container: false
     steps:
-    - IN: tests_that_fail
+    - IN: windows_tests_that_fail
     - TASK:
-        script: export foo=123
+        script: echo "hi :)"
     on_success:
-      - script: foo=321
+      - script: echo "success!!!"
     always:
-      - script: echo $foo && echo always && exit 1
+      - script: exit 1
+      - script: echo "always"
 
-  - name: centos_exit_0_in_always_in_success_script
+  - name: windows_exit_0_in_always_in_success_script
     type: runSh
     runtime:
-      nodePool: c07custom
+      nodePool: custom__x86_64__WindowsServer_2016
+      container: false
     steps:
-    - IN: tests_that_succeed
+    - IN: windows_tests_that_succeed
     - TASK:
-        script: export foo=123
+        script: echo "hi :)"
     on_success:
-      - script: foo=321
+      - script: echo "success!!!"
     always:
-      - script: echo $foo && echo always && exit 0
+      - script: exit 0
+      - script: echo "always"
 
-  - name: centos_exit_1_in_always_in_fail_script
+  - name: windows_exit_1_in_always_in_fail_script
     type: runSh
     runtime:
-      nodePool: c07custom
+      nodePool: custom__x86_64__WindowsServer_2016
+      container: false
     steps:
-    - IN: tests_that_fail
+    - IN: windows_tests_that_fail
     - TASK:
-        script: export foo=123 && sl
+        script: foo
     on_failure:
-      - script: foo=321
+      - script: echo "failure!!!"
     always:
-      - script: echo $foo && echo always && exit 1
-
-# caveats
-  - name: centos_unset_err_trap_and_incorrect_command
-    type: runSh
-    runtime:
-      nodePool: c07custom
-    steps:
-    - IN: caveats
-    - TASK:
-        name: run_fail_script
-        script: |
-            trap "" ERR
-            sl
-            ls
-
-  - name: centos_unset_exit_trap_exit_0
-    type: runSh
-    runtime:
-      nodePool: c07custom
-    steps:
-    - IN: caveats
-    - TASK:
-        name: run_fail_script
-        script: |
-            trap "" EXIT
-            exit 0
+      - script: exit 1
+      - script: echo "always"
